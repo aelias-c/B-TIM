@@ -20,7 +20,7 @@ The python environment can be installed from the environment.yml file with conda
 conda env create -f environment.yml
 ```
 
-BTIM.py contains the main model script, which can be run for the snow year (Aug YYYY, JUlY YYYY+1) as follows:
+BTIM.py contains the main model script, which can be run for the snow year (Aug YYYY, July YYYY+1) as follows:
 
 ```
 python BTIM.py YYYY
@@ -52,7 +52,7 @@ To adjust file I/O details, you must make changes in the config.py file and crea
       3. **read_day** must take in datasets as returned by read_month and access a particular time step, indexing 0 as the first time step of the first day of a specified month.
       4. **standardize_precip** should be able to take in (precipitation) data and rescale so that the units are in metres per temperature step.
    
-2. With all this in place, editing the config.py file is straightforward for a given experiment. Load in the helper file you just made in the first line (e.g. 'from ERA5_BTIM import \*) and make changes to any varaibles, defined below.
+2. With all this in place, editing the config.py file is straightforward for a given experiment. Load in the helper file you just made in the first line (e.g. 'from ERA5_BTIM import \*') and make changes to any varaibles, defined below.
 
    **Variables:**
    

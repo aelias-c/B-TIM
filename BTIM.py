@@ -10,7 +10,7 @@ from save_annual import save_annual
 
 import config as exd
 
-year = sys.argv[1]
+year = int(sys.argv[1])
 
 snow_season = [year, year+1]
 year_tag = str(year)+'_'+str(year+1)

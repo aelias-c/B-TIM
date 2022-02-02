@@ -1,7 +1,7 @@
 from netCDF4 import Dataset
 
 forcing = 'ERA5'
-data_loc = '/users/jk/19/achereque/SnowProjects/data/01_forcing/ERA5/'
+data_loc = 'forcing/'
 pr_freq = 24 #time steps per day
 t2m_freq = 24 #time steps per day
 temp_in_K = True

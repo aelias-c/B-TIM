@@ -1,5 +1,7 @@
 from numpy import isin
 
+month_names_aug = ['Aug', 'Sept', 'Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'March', 'April', 'May', 'June', 'July']
+
 # function calculating year-length
 def len_month(m, year, leapday=True):
     '''Takes in month (Jan = 1) and year, returns the number of days in the month.'''

@@ -1,0 +1,5 @@
+*.nc
+JRA_BTIM.py
+MERRA2_BTIM.py
+CESM_BTIM.py
+

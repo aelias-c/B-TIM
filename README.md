@@ -20,7 +20,7 @@ The python environment can be installed from the environment.yml file with conda
 conda env create -f environment.yml
 ```
 
-BTIM.py contains the main model script, which can be run for the snow year (Aug YYYY, JUlY YYYY+1) as follows:
+BTIM.py contains the main model script, which can be run for the snow year (Aug YYYY, July YYYY+1) as follows:
 
 ```
 python BTIM.py YYYY

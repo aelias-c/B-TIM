@@ -26,6 +26,16 @@ BTIM.py contains the main model script, which can be run for the snow year (Aug 
 python BTIM.py YYYY
 ```
 
+### Working example:
+* Run one month with ERA5 forcing that is provided by executing:
+```
+python BTIM.py 2020
+```
+* The model run will end with a FileNotFound error for this sample - only August forcing files are found in 'forcing/'
+* One output file should have been generated, to be found in 'output/'
+
+### Running with new forcing
+
 To adjust file I/O details, you must make changes in the config.py file and create a forcing-specific file (such as ERA5_BTIM.py).
 
 1. The helper file should contain all of the variables described below as well as four functions.

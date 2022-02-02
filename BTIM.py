@@ -8,7 +8,7 @@ from time_step import Brasnett
 from save_daily import save_daily
 from save_annual import save_annual
 
-import config as exd
+import CONFIG as exd
 
 year = int(sys.argv[1])
 

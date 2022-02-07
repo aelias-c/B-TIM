@@ -5,7 +5,7 @@ def square_mask(full_lat, full_lon, latminmax, lonminmax, lon_0_360):
     lat_mask = (full_lat >= latminmax[0]) & (full_lat <= latminmax[1])
     
     if lon_0_360:
-        lon_mask = (full_lon >= np.min(lonminmax)) & (full_lon <= np.min(lonminmax))
+        lon_mask = (full_lon >= np.min(lonminmax)) & (full_lon <= np.max(lonminmax))
     
     else:
         if lonminmax[0] < lonminmax[1]:

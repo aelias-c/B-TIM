@@ -82,16 +82,16 @@ def hourly_melt_rate(DENSITY, boreal_mask):
 
     return dd/24 #melt in [mm/hr]
 
-def reduce_precip(pr, boreal_scaling, boreal_mask, tundraprairie_scaling, tundraprairie_mask):
+def reduce_precip(pr, tundraprairie_scaling, tundraprairie_mask, boreal_scaling, boreal_mask):
     '''
     Uniform reduction for two snow class types. Trying
     to capture canopy interception/sublimation effects for
     boreal snowpack. Trying to capture blowing snow sublimation
     loss for tundra and prairie snowpack.
     '''
+    pr[tundraprairie_mask] = tundraprairie_scaling * pr[tundraprairie_mask]
     pr[boreal_mask] = boreal_scaling * pr[boreal_mask]
-    pr[tundraprairie_mask] = tundraprairie_mask * pr[tundraprairie_mask]
-
+   
     return pr
 
 def hourly_melt(weight, mixed_pr, GAMMA, T, PCPN, DEPTH, DENSITY):
@@ -152,7 +152,7 @@ def hourly_melt(weight, mixed_pr, GAMMA, T, PCPN, DEPTH, DENSITY):
     
     return DEPTH, DENSITY
 
-def Brasnett(hours_per_chunk, mixed_pr, T, pr, OLD, CD, boreal_scaling=0.8, tundraprairie_scaling=0.8):
+def Brasnett(hours_per_chunk, mixed_pr, T, pr, OLD, CD, tundraprairie_scaling=0.8, boreal_scaling=0.8):
     '''
     Empirical algorithm to melt snow according to the surface temperature and 
     increase snow depth according to the precipitation that has fallen since 
@@ -195,8 +195,8 @@ def Brasnett(hours_per_chunk, mixed_pr, T, pr, OLD, CD, boreal_scaling=0.8, tund
     
     GAMMA = hourly_melt_rate(DENSITY, boreal_mask)
     
-    pr = reduce_precip(pr, boreal_scaling, boreal_mask, 
-                      tundraprairie_scaling, tundraprairie_mask)
+    pr = reduce_precip(pr, tundraprairie_scaling, tundraprairie_mask,
+                       boreal_scaling, boreal_mask)
         
     NEW = OLD * DENSITY * 0.01 #[mm water]
     

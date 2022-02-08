@@ -152,7 +152,7 @@ def hourly_melt(weight, mixed_pr, GAMMA, T, PCPN, DEPTH, DENSITY):
     
     return DEPTH, DENSITY
 
-def Brasnett(hours_per_chunk, mixed_pr, T, pr, OLD, CD, tundraprairie_scaling=0.8, boreal_scaling=0.8):
+def Brasnett(mixed_pr, T, pr, OLD, CD, tundraprairie_scaling=0.8, boreal_scaling=0.8):
     '''
     Empirical algorithm to melt snow according to the surface temperature and 
     increase snow depth according to the precipitation that has fallen since 

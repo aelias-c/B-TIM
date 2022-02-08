@@ -27,7 +27,7 @@ for i,m in enumerate([8,9,10,11,12,1,2,3,4,5,6,7]):
         
     days_in_month = len_month(m, current_y, cfg.leapdays)
     
-    full_lat, full_lon, t2m, tp = cfg.read_month(t2m_files[i], tp_files[i], m, current_y)
+    full_lat, full_lon, t2m, pr = cfg.read_month(t2m_files[i], tp_files[i], m, current_y)
     
     if i == 0:
         

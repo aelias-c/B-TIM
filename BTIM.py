@@ -53,7 +53,7 @@ for i,m in enumerate([8,9,10,11,12,1,2,3,4,5,6,7]):
     density_record = np.zeros((nlats, nlons, days_in_month)) #[kg/m3], snow density
     
     # ------------- Step through month ------------- #
-    day = 1
+    day = 0
     for step in range(days_in_month * cfg.chunks):
         
          # ------------ Read in precip data ------------- #

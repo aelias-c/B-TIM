@@ -117,7 +117,7 @@ for i,m in enumerate([8,9,10,11,12,1,2,3,4,5,6,7]):
         t2m.close()      
         
 # ------ Save accumulated records to file ------ #
-save_annual(cfg.experiment_name, cfg.output_loc, cfg.mixed_pr, year_tag, full_lat[latmask], full_lon[lonmask], ptot_record, sftot_record, SWEmax_record)
+save_annual(cfg.Unique_ID, cfg.output_loc, cfg.mixed_pr, year_tag, full_lat[latmask], full_lon[lonmask], ptot_record, sftot_record, SWEmax_record)
 
 pr.close()
 t2m.close()

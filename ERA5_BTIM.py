@@ -2,11 +2,10 @@ from netCDF4 import Dataset
 
 forcing = 'ERA5'
 data_loc = 'forcing/'
-pr_freq = 24 #time steps per day
-t2m_freq = 24 #time steps per day
+chunks = 24
+pr_freq = 1
 temp_in_K = True
-pr_in_mmhr = True
-lat_increasing = True
+pr_in_mhr = True
 lon_0_360 = True
 
 tp_name = 'tp'
@@ -28,7 +27,7 @@ def prepare_filenames(snow_season):
     
     return t2m_files, tp_files
 
-def read_month(t2m_file, tp_file, month):
+def read_month(t2m_file, tp_file, month, y):
     t2m = Dataset(t2m_file)
     tp = Dataset(tp_file)
     
@@ -37,10 +36,15 @@ def read_month(t2m_file, tp_file, month):
     return full_lat, full_lon, t2m, tp
 
 def read_day(data, var, step, latmask, lonmask):
-    return data[var][step,latmask,lonmask]
+    if var == 'tp':
+        v = tp_name
+    elif var == 't2m':
+        v = t2m_name
+        
+    return data[v][step,latmask,lonmask]
 
 def standardize_precip(data):
-    '''Convert into mm per precipitation time step from native units'''
+    '''Convert into m per precipitation time step from native units'''
     return data
 
 

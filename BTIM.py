@@ -85,7 +85,7 @@ for i,m in enumerate([8,9,10,11,12,1,2,3,4,5,6,7]):
         TP_hr = prate / hours_per_step #[m] in one hour
         
         # ----------- Time-step by one chunk ----------- #
-        old_depth, old_dens, swe = Brasnett(cfg.mixed_precip, T_hr, TP_hr, old_depth, old_dens)
+        old_depth, old_dens, swe = Brasnett(cfg.mixed_pr, T_hr, TP_hr, old_depth, old_dens)
 
         # --------- Track any record-high SWE ---------- #
         SWEmax_record = np.maximum(SWEmax_record, swe)

@@ -54,10 +54,11 @@ for i,m in enumerate([8,9,10,11,12,1,2,3,4,5,6,7]):
     
     # ------------- Step through month ------------- #
     day = 0
-    for step in range(days_in_month * cfg.chunks):
+    for step in range(days_in_month * cfg.t2m_freq):
         
          # ------------ Read in precip data ------------- #
-        prate = cfg.read_day(pr, 'tp', step // cfg.pr_freq,  latmask, lonmask)
+        t2m_steps_per_pr = int(cfg.t2m_freq/cfg.pr_freq)
+        prate = cfg.read_day(pr, 'tp', step // t2m_steps_per_pr,  latmask, lonmask)
         prate = cfg.standardize_precip(prate) #[m water] per precipitation time step
         prate[prate < 0] = 0
         ptot_record += prate 
@@ -76,7 +77,7 @@ for i,m in enumerate([8,9,10,11,12,1,2,3,4,5,6,7]):
         sftot_record[tavg <= 0] += prate[tavg <= 0]
         
         # --------- Linearly interpolate temp ---------- #
-        hours_per_step = int(24/cfg.chunks)
+        hours_per_step = int(24/cfg.t2m_freq)
         T_hr = np.ones((hours_per_step+1, TSFC.shape[1], TSFC.shape[2]))
         for hr in range(hours_per_step+1):
             T_hr[hr,:,:] = (TSFC[1,:,:] - TSFC[0,:,:]) * hr / hours_per_step + TSFC[0,:,:]
@@ -91,7 +92,7 @@ for i,m in enumerate([8,9,10,11,12,1,2,3,4,5,6,7]):
         SWEmax_record = np.maximum(SWEmax_record, swe)
 
         # --- Record daily depth and density values ---- #
-        if (step + 1) % cfg.chunks == 0: #last time step each day
+        if (step + 1) % cfg.t2m_freq == 0: #last time step each day
             print('day ', day)
             snf_record[:,:,day] = old_depth
             density_record[:,:,day] = old_dens

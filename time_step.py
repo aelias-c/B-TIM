@@ -203,7 +203,7 @@ def Brasnett(hours_per_chunk, mixed_pr, T, pr, OLD, CD, tundraprairie_scaling=0.
     ### beyond this point, NEW and DENSITY will be updated for each hour 
         #based on the temperature and precipitation
     NEW, DENSITY = hourly_melt(0.5, mixed_pr, GAMMA, T[0,:,:], pr, NEW, DENSITY)
-    for i in range(1, hours_per_chunk):
+    for i in range(1, np.shape(T)[0]-1):
         NEW, DENSITY = hourly_melt(1, mixed_pr, GAMMA, T[i,:,:], pr, NEW, DENSITY)
     NEW, DENSITY = hourly_melt(0.5, mixed_pr, GAMMA, T[-1,:,:], pr, NEW, DENSITY)
     

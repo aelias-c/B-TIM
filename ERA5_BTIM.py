@@ -2,8 +2,8 @@ from netCDF4 import Dataset
 
 forcing = 'ERA5'
 data_loc = 'forcing/'
-chunks = 24
-pr_freq = 1
+t2m_freq = 24
+pr_freq = 24
 temp_in_K = True
 pr_in_mhr = True
 lon_0_360 = True

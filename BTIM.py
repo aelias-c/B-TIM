@@ -22,7 +22,7 @@ print('Processing snow year: ' + year_tag)
 for i,m in enumerate([8,9,10,11,12,1,2,3,4,5,6,7]):
     
     current_y = year
-    if i < 8:
+    if m < 8:
         current_y = year+1
         
     days_in_month = len_month(m, current_y, cfg.leapdays)

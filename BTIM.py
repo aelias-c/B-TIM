@@ -18,6 +18,7 @@ year_tag = str(year)+'_'+str(year+1)
 t2m_files, tp_files = cfg.prepare_filenames(snow_season)
 
 print('Processing snow year: ' + year_tag)
+
 # --- Step month by month --- #  
 for i,m in enumerate([8,9,10,11,12,1,2,3,4,5,6,7]):
     
@@ -44,12 +45,12 @@ for i,m in enumerate([8,9,10,11,12,1,2,3,4,5,6,7]):
         SWEmax_record = np.zeros((nlats, nlons)) #[m water equivalent], maximum SWE
 
         # - Set up prognostic variable grids only once - #
-        old_depth = np.zeros((nlats, nlons)) #[cm snow]
+        old_depth = np.zeros((nlats, nlons)) #[m snow]
         old_dens = np.zeros((nlats, nlons)) #[kg/m3]
         
         
     # ----- Set up daily records for the month ----- #
-    snf_record = np.zeros((nlats, nlons, days_in_month)) #[cm snow], snow depth
+    snf_record = np.zeros((nlats, nlons, days_in_month)) #[m snow], snow depth
     density_record = np.zeros((nlats, nlons, days_in_month)) #[kg/m3], snow density
     
     # ------------- Step through month ------------- #
@@ -57,7 +58,7 @@ for i,m in enumerate([8,9,10,11,12,1,2,3,4,5,6,7]):
     for step in range(days_in_month * cfg.t2m_freq):
         
          # ------------ Read in precip data ------------- #
-        t2m_steps_per_pr = int(cfg.t2m_freq/cfg.pr_freq)
+        t2m_steps_per_pr = cfg.t2m_freq // cfg.pr_freq
         prate = cfg.read_day(pr, 'tp', step // t2m_steps_per_pr,  latmask, lonmask)
         prate = cfg.standardize_precip(prate) #[m water] per precipitation time step
         prate[prate < 0] = 0
@@ -71,14 +72,14 @@ for i,m in enumerate([8,9,10,11,12,1,2,3,4,5,6,7]):
             t2m_last = t2m_air #[K]
         t2m_air = cfg.read_day(t2m, 't2m', step, latmask, lonmask) #[K]
         TSFC = np.stack((t2m_last, t2m_air)) - 273.15 #[degrees C]  
-        tavg = np.mean(TSFC, axis=0)
+        tavg = np.mean(TSFC, axis=0) #[degrees C] 
         
         # ------ Record snowfall where tavg < 0C ------- #
         sftot_record[tavg <= 0] += prate[tavg <= 0]
         
         # --------- Linearly interpolate temp ---------- #
         hours_per_step = int(24/cfg.t2m_freq)
-        T_hr = np.ones((hours_per_step+1, TSFC.shape[1], TSFC.shape[2]))
+        T_hr = np.ones((hours_per_step+1, TSFC.shape[1], TSFC.shape[2])) #[degrees C] 
         for hr in range(hours_per_step+1):
             T_hr[hr,:,:] = (TSFC[1,:,:] - TSFC[0,:,:]) * hr / hours_per_step + TSFC[0,:,:]
         
@@ -89,15 +90,14 @@ for i,m in enumerate([8,9,10,11,12,1,2,3,4,5,6,7]):
         old_depth, old_dens, swe = Brasnett(cfg.mixed_pr, T_hr, TP_hr, old_depth, old_dens)
 
         # --------- Track any record-high SWE ---------- #
-        SWEmax_record = np.maximum(SWEmax_record, swe)
+        SWEmax_record = np.maximum(SWEmax_record, swe) #[m water equivalent] 
 
         # --- Record daily depth and density values ---- #
         if (step + 1) % cfg.t2m_freq == 0: #last time step each day
             print('day ', day)
-            snf_record[:,:,day] = old_depth
-            density_record[:,:,day] = old_dens
             
-            # --- Record daily depth and density values ---- #
+            snf_record[:,:,day] = old_depth #[m snow] 
+            density_record[:,:,day] = old_dens #[kg/m3]
             
             # ----------- Write to monthly file ------------ #
             if (day + 1) == days_in_month: #last time step of last day of month

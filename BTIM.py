@@ -42,7 +42,7 @@ for i,m in enumerate([8,9,10,11,12,1,2,3,4,5,6,7]):
         # ------ Set up records for the year once ------ #
         ptot_record = np.zeros((nlats, nlons)) #[m], total precip 
         sftot_record = np.zeros((nlats, nlons)) #[m water equivalent], total snowfall
-        SWEmax_record = np.zeros((nlats, nlons)) #[m water equivalent], maximum SWE
+        SWEmax_record = np.zeros((nlats, nlons)) #[mm water equivalent], maximum SWE
 
         # - Set up prognostic variable grids only once - #
         old_depth = np.zeros((nlats, nlons)) #[m snow]
@@ -78,7 +78,7 @@ for i,m in enumerate([8,9,10,11,12,1,2,3,4,5,6,7]):
         sftot_record[tavg <= 0] += prate[tavg <= 0]
         
         # --------- Linearly interpolate temp ---------- #
-        hours_per_step = int(24/cfg.t2m_freq)
+        hours_per_step = 24 // cfg.t2m_freq
         T_hr = np.ones((hours_per_step+1, TSFC.shape[1], TSFC.shape[2])) #[degrees C] 
         for hr in range(hours_per_step+1):
             T_hr[hr,:,:] = (TSFC[1,:,:] - TSFC[0,:,:]) * hr / hours_per_step + TSFC[0,:,:]
@@ -90,7 +90,7 @@ for i,m in enumerate([8,9,10,11,12,1,2,3,4,5,6,7]):
         old_depth, old_dens, swe = Brasnett(cfg.mixed_pr, T_hr, TP_hr, old_depth, old_dens)
 
         # --------- Track any record-high SWE ---------- #
-        SWEmax_record = np.maximum(SWEmax_record, swe) #[m water equivalent] 
+        SWEmax_record = np.maximum(SWEmax_record, swe) #[mm water equivalent] 
 
         # --- Record daily depth and density values ---- #
         if (step + 1) % cfg.t2m_freq == 0: #last time step each day

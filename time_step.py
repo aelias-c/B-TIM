@@ -1,62 +1,76 @@
 import numpy as np
 
-def snow_aging(DENSITY, DEPTH, T, icl, Tmelt, delt, weight, rhomax): 
-    TDD = T - Tmelt
-    # two regimes: warm/wet settling, cold settling
-    WET_SETTLE = (T >= Tmelt) & (DEPTH > 0)
-    COLD_SETTLE = (T < Tmelt) & (DEPTH > 0.)                           
+def warm_snow_aging(DENSITY, SWE, del_t, wet_settle_mask):
+    sdep = SWE[wet_settle_mask] / DENSITY[wet_settle_mask]  #[m snow]
+    denmax = 700. - ((2047000. / sdep) * (1 - np.exp(- sdep / 6730.))) #[kg/m3]
+    den_diff = denmax - DENSITY[wet_settle_mask]
 
-    #warm, wet snow
-    sdepcm = 100 * (DEPTH[WET_SETTLE] / DENSITY[WET_SETTLE])  #[cm]
-    denmax = 700. - ((20470. / sdepcm) * (1 - np.exp(-sdepcm / 67.3)))
-    den_diff = denmax - DENSITY[WET_SETTLE]
-
-    TIMFAC = np.exp(np.log(den_diff[den_diff > 0.1] / 200.) - (2.778e-6 * delt * weight))
-
-    DENSITY[WET_SETTLE][den_diff> 0.1] = denmax[den_diff > 0.1] - 200. * TIMFAC
-    DENSITY[WET_SETTLE] = np.minimum(rhomax, DENSITY[WET_SETTLE])
-
-    #cold snow aging
-    C2 = np.where((icl == 2) | (icl == 6), -28, -21)[COLD_SETTLE]
-    den_gcm = DENSITY[COLD_SETTLE] / 1000
-    del_den = 0.02 * np.exp(0.08 * TDD[COLD_SETTLE]) * 0.6 * DEPTH[COLD_SETTLE] * np.exp(C2 * den_gcm) / 10
-    dgain = del_den * 1000
-
-    DENSITY[COLD_SETTLE] = DENSITY[COLD_SETTLE] + (dgain * weight)
-    DENSITY[COLD_SETTLE] = np.minimum(rhomax, DENSITY[COLD_SETTLE])
-
-    return DENSITY                          
-
-def temp_melt(DEPTH, T, GAMMA, Tmelt, weight):
-    TDD = T - Tmelt
-    TEMP_MELT = (TDD > 0) & (DEPTH > 0)
-
-    DEPTH[TEMP_MELT] = DEPTH[TEMP_MELT] - (weight * GAMMA[TEMP_MELT] * TDD[TEMP_MELT])
+    TIMFAC = np.exp(np.log(den_diff[den_diff > 0.1] / 200.) - (2.778e-6 * del_t))
+    del_den_warm = np.where(den_diff > 0.1, dendiff - 200 * TIMFAC, 0.)
     
-    return DEPTH
+    return del_den_warm
 
-def rain_melt(RAIN, weight, T, DEPTH, rain_melt_mask, delt):
+def cold_snow_aging(DENSITY, SWE, TDD, cold_settle_mask):
+    C2 = np.where((icl == 2) | (icl == 6), -28000, -21000)[cold_settle_mask]
+    del_den_cold = 0.02 * np.exp(0.08 * TDD[cold_settle_mask]) * (0.6 * SWE[cold_settle_mask]) * np.exp(C2 * DENSITY[cold_settle_mask]) / 10 #[kg/m3]
+    
+    return del_den_cold                        
+
+def temp_melt(TDD, GAMMA, temp_melt_mask):
+    '''
+    Update depth when temperature exceeds T_melt.
+    
+    Args:
+        TDD (np.array): temperature for sub-step.
+        GAMMA (np.array)
+        temp_melt_mask (np.array)
+    '''
+        
+    del_SWE = np.where(temp_melt_mask, GAMMA * TDD, 0.) #[m water/hr]
+    
+    return del_SWE
+
+def rain_melt(RAIN, T_diff, rain_melt_mask):
+    '''
+    Melt snow wherever there is rain according to rain_melt_mask.
+    
+    Args:
+        RAIN (np.array): total liquid precipitation (m water)
+        T_diff (np.array): Temerature for time step in degrees C
+        rain_melt_mask
+    '''
+    
+    ### define some constants
     rhow = 1000 #[kg/m^3], density of water
     Cw = 4.18e3 #[J], specific heat of water
     rhoice = 917 #[kg/m^3], density of ice
     Lf = 0.334e6 #[J/kg], latent heat of fusion of water
 
-    prain = np.where(rain_melt_mask, RAIN * 1000 / delt, 0.)
-    rmelt = (rhow * Cw * prain * T) / (Lf * rhoice) #[mm/s]
+    ### compute rain 
+    ### RAIN has units [m water] equiv. [1 m3 water per m2]
+    
+    mass_water_per_m2 = rhow * RAIN #[kg/m2]
+    heat_from_rain = np.where(rain_melt_mask, mass_water_per_m2 * Cw * T_diff, 0.) #[J/m2]
+    
+    del_SWE = heat_from_rain / (Lf * rhoice) #[m water]
 
-    DEPTH = DEPTH - (weight * delt * rmelt)
-    DEPTH = np.maximum(0., DEPTH)
-
-    return DEPTH
+    return del_SWE
 
 
 def new_snow_density(T):
     '''
     New snow density follows Hedstrom and Pomeroy (1998).
+    
+    Args:
+        T (np.array): Temerature for time step in degrees C
     '''
-
+    
+    ### density is temperature dependent
     rhosfall_cold = 67.9 + 51.3 * np.exp(T / 2.6)
+    
+    ### rhosfall_warm will only be used if mixed precip is active
     rhosfall_warm =  np.minimum(119.2 + (20 * T), 200.)
+  
     rhosfall = np.where(T <= 0, rhosfall_cold, rhosfall_warm)
     return rhosfall
 
@@ -69,20 +83,21 @@ def hourly_melt_rate(DENSITY, boreal_mask):
     ### find gamma, hourly melt rate. depends on density 
         #and vegetation type following Kuusisto (1980)
 
-    dd = ((0.0196 / 2) * DENSITY) - 2.39 #daily melt [mm/day]
-    dd[dd < 0.1] = 0.1
-    dd[dd > 5.5] = 5.5
+    dd = (9.8e-6 * DENSITY) - 2.39e-3 #daily melt [m water/dayK]
+    dd[dd < 1e-4] = 1e-4
+    dd[dd > 5.5e-3] = 5.5e-3
 
-    boreal = ((0.0104 / 2) * DENSITY) - 0.70 #calculate daily melt as if all grid squares were Boreal forest [mm/day]
-    boreal[boreal < 0.1] = 0.1 
-    boreal[boreal > 3.5] = 3.5
-
-
+    boreal = (5.2e-6 * DENSITY) - 0.7e-3 #calculate daily melt as if all grid squares were Boreal forest [m/dayK]
+    boreal[boreal < 1e-4] = 1e-4
+    boreal[boreal > 3.5e-3] = 3.5e-3
+    
     dd[boreal_mask] = boreal[boreal_mask] #merge dd and boreal
 
-    return dd/24 #melt in [mm/hr]
+    return dd/24 #melt in [m/hrK]
 
-def reduce_precip(pr, tundraprairie_scaling, tundraprairie_mask, boreal_scaling, boreal_mask):
+def reduce_precip(pr, 
+                  tundraprairie_scaling, tundraprairie_mask, 
+                  boreal_scaling, boreal_mask):
     '''
     Uniform reduction for two snow class types. Trying
     to capture canopy interception/sublimation effects for
@@ -94,7 +109,8 @@ def reduce_precip(pr, tundraprairie_scaling, tundraprairie_mask, boreal_scaling,
    
     return pr
 
-def hourly_melt(weight, mixed_pr, GAMMA, T, PCPN, DEPTH, DENSITY):
+def hourly_melt(weight, mixed_pr, GAMMA, T, PCPN, SWE, DENSITY):
+    
     '''
     Compute new snowfall density as a function of air temp
     following Hedstrom and Pomeroy (1998). For temperatures
@@ -104,19 +120,28 @@ def hourly_melt(weight, mixed_pr, GAMMA, T, PCPN, DEPTH, DENSITY):
     
     Args:
         weight: 0.5 used for first and last hour in chunk, 1 used for others
-        T: temperature at substep
-        PCPN: 1h precipitation (mm water)
-        DEPTH: existing snow depth (mm water equivalent)
-        DENSITY: existing snow density (kg/m^3)
+            unitless.
+        mixed_pr:
         GAMMA: melting rate (mm/hr)
+        T: temperature for sub-step.
+        PCPN: 1h total precipitation (m water)
+        SWE: existing snow depth (mm water equivalent)
+        DENSITY: existing snow density (kg/m^3)
     '''
+    
     delt = 3600 #1h [s]
+    
+    ### import previous parameter values
     rhomin = 200 #[kg/m^3]
-    rhomax = 550 #[kg/m^3]         
-    Tmelt = -1 #[degree C], melt threshold temp
+    rhomax = 550 #[kg/m^3]    
+    sdep_max = 6 #[m snow]
+    T_switch_lower = 0 #[degrees C]
+    T_switch_upper = 0 #[degrees C]
+    T_freeze = 0 #[degrees C]
+    T_melt = 0 #[degrees C]
     
     iopen = 1
-    icl = np.ones_like(DEPTH)
+    icl = np.ones_like(SWE)
     
     ### determine precipitation phase at grid squares
     phase = np.where(T <= 0, 1., 0.) #snow: phase = 1, rain: phase = 0
@@ -128,29 +153,44 @@ def hourly_melt(weight, mixed_pr, GAMMA, T, PCPN, DEPTH, DENSITY):
     RAIN = PCPN * (1 - phase) #[m water] in one hour
       
     ### calculate density of new snow based on temperature   
-    rhosfall = new_snow_density(T)[SNOW > 0]
+    rhosfall = new_snow_density(T)[SNOW > 0] #[kg/m3]
 
-    ### change swe units, weight if first or last step
-    sfall = weight * 1000 * SNOW[SNOW > 0] #[mm water equivalent]
-
-    ### add new snow to depth
-    DEPTH[SNOW > 0] += sfall 
+    ### weight by 0.5 if first or last step
+    sfall = weight * SNOW[SNOW > 0] #[m water equivalent]
     
-    ### calculate snowpack density through weighted average, with minimum allowed density enforced
-    DENSITY[SNOW > 0] = ((rhosfall * sfall) + DENSITY[SNOW > 0] * (DEPTH[SNOW > 0] - sfall)) / DEPTH[SNOW > 0] 
+    ### replace snowpack density with weighted average
+    ### enforce minimum density
+    DENSITY[SNOW > 0] = ((rhosfall * sfall) + (DENSITY[SNOW > 0] * SWE[SNOW > 0])) / (SWE[SNOW > 0] + sfall)
     DENSITY[SNOW > 0] = np.maximum(rhomin, DENSITY[SNOW > 0])
-
+    
+    ### add new snow to depth
+    SWE[SNOW > 0] += sfall * 1000 #[mm water equivalent]
+    
     ### deal with rain melt
-    rain_melt_mask = (RAIN > 0) & (T > 0) & (DEPTH > 0)
-    DEPTH = rain_melt(RAIN, weight, T, DEPTH, rain_melt_mask, delt)
-                 
-    ### melt at temperature T       
-    DEPTH = np.maximum(0., temp_melt(DEPTH, T, GAMMA, Tmelt, weight))
+    rain_melt_mask = (RAIN > 0) & (T > T_freeze) & (SWE > 0)
+    del_SWE1 = weight * rain_melt(RAIN, T-T_freeze, rain_melt_mask) #[m water]
+           
+    ### melt at temperature T   
+    temp_melt_mask = (T > T_melt) & (SWE > 0)
+    del_SWE2 = weight * temp_melt(T - T_melt, GAMMA, temp_melt_mask) #[m water]
     
-    ### age snow at T                        
-    DENSITY = snow_aging(DENSITY, DEPTH, T, icl, Tmelt, delt, weight, rhomax)
+    ### update SWE and ensure no negative depths
+    SWE = np.maximum(0., SWE - del_SWE1 * 1000 - del_SWE2 * 1000) #[mm water equivalent]
     
-    return DEPTH, DENSITY
+    ### age snow at T         
+    ### two regimes: warm/wet settling, cold settling
+    WET_SETTLE = (T >= T_melt) & (SWE > 0)
+    COLD_SETTLE = (T < T_melt) & (SWE > 0) 
+    
+    snow_aging(DENSITY, SWE, T - T_melt, icl, del_t, wet_settle_mask, cold_settle_mask):
+        
+    del_DENSITY_warm = warm_snow_aging(DENSITY, SWE, delt * weight, WET_SETTLE)
+    del_DENSITY_cold = cold_snow_aging(DENSITY, SWE, T - T_melt, COLD_SETTLE)
+   
+    DENSITY[WET_SETTLE] = np.minimum(rhomax, DENSITY[WET_SETTLE] + del_DENSITY_warm)
+    DENSITY[COLD_SETTLE] = np.minimum(rhomax, DENSITY[COLD_SETTLE] + weight * del_DENSITY_cold)
+    
+    return SWE, DENSITY
 
 def Brasnett(mixed_pr, T, pr, OLD, CD, tundraprairie_scaling=0.8, boreal_scaling=0.8):
     '''
@@ -159,13 +199,13 @@ def Brasnett(mixed_pr, T, pr, OLD, CD, tundraprairie_scaling=0.8, boreal_scaling
     the last analysis time.
     
     Args:
-        TSFC (floats): ndarray of shape (2, lat, lon) containing the temperature 
-            [degree C] at the previous step and current step.
-        OLD (float): previous time step snow depth field [cm].
-        CD (float): previous time step density of the snow pack [kg/m^3]
-        PCPN (float): total precipitation [m water] occurring during the time step
+        TSFC (np.array): array of shape (2, lat, lon) containing the temperatures 
+            [degree C] at the previous step and current time step.
+        OLD (np.array): previous time step snow depth field [m].
+        CD (np.array): previous time step density of the snow pack [kg/m^3].
+        PCPN (np.array): total precipitation [m water] occurring during the time step.
     
-    #if want to use:
+    ### --- if want to use: --- ###
     #Sturm snow classification (icl):
         Water = 0        RHOMIN
         tundra snow = 1    200
@@ -178,42 +218,56 @@ def Brasnett(mixed_pr, T, pr, OLD, CD, tundraprairie_scaling=0.8, boreal_scaling
         
     #min density for Sturm snow classes, (starting with water so index matches classification number)
     #rhomin = [1000., 200., 160., 160., 180., 140., 120., 200.] #kg/m^3
+    ### --- --- --- --- --- --- ###
     '''       
+    
+    ### set parameter values
     rhomin = 200 #[kg/m^3]
     rhomax = 550 #[kg/m^3]    
-    iopen = 1
-    icl = 1
-    sdep_max = 600 #[cm snow]
+    sdep_max = 6 #[m snow]
+    T_switch_lower = 0 #[degrees C]
+    T_switch_upper = 0 #[degrees C]
+    T_freeze = 0 #[degrees C]
+    T_melt = 0 #[degrees C]
+    
+    iopen = np.ones_like(OLD) # all points treated as open
+    icl = np.ones_like(OLD) # all points are treated as tundra
 
+    ### enforce max and min densities
     DENSITY = np.maximum(rhomin, np.minimum(rhomax, CD)) #[kg/m^3]
     
     ### no snow and none possible
-    no_chance_mask = (T[0,:,:] > 2) & (T[-1,:,:] > 2) & (OLD <= 0)
+    no_chance_mask = (T[0,:,:] > T_switch_upper) & (T[-1,:,:] > T_switch_upper) & (OLD <= 1e-5)
     
+    ### regional masks
     boreal_mask = (icl == 2) & (iopen == 0)  
-    tundraprairie_mask = (icl == 1) | (icl == 5)
+    tundraprairie_mask = (icl == 1) | (icl == 5) 
     
-    GAMMA = hourly_melt_rate(DENSITY, boreal_mask)
+    ### calculate hourly melt rate
+    GAMMA = hourly_melt_rate(DENSITY, boreal_mask) #[m/hrK]
     
-    pr = reduce_precip(pr, tundraprairie_scaling, tundraprairie_mask,
+    ### estimate precip loss to interception/sublimation
+    pr = reduce_precip(pr, 
+                       tundraprairie_scaling, tundraprairie_mask,
                        boreal_scaling, boreal_mask)
         
-    NEW = OLD * DENSITY * 0.01 #[mm water]
+    ### calculate water equivalent
+    NEW_SWE = DENSITY * OLD #[kg/m2 or mm water]
     
-    ### beyond this point, NEW and DENSITY will be updated for each hour 
-        #based on the temperature and precipitation
-    NEW, DENSITY = hourly_melt(0.5, mixed_pr, GAMMA, T[0,:,:], pr, NEW, DENSITY)
+    ### beyond this point, update NEW_SWE and DENSITY for each hour 
+        #using on the temperature and precipitation
+    NEW_SWE, DENSITY = hourly_melt(0.5, mixed_pr, GAMMA, T[0,:,:], pr, NEW_SWE, DENSITY)
     for i in range(1, np.shape(T)[0]-1):
-        NEW, DENSITY = hourly_melt(1, mixed_pr, GAMMA, T[i,:,:], pr, NEW, DENSITY)
-    NEW, DENSITY = hourly_melt(0.5, mixed_pr, GAMMA, T[-1,:,:], pr, NEW, DENSITY)
+        NEW_SWE, DENSITY = hourly_melt(1, mixed_pr, GAMMA, T[i,:,:], pr, NEW_SWE, DENSITY)
+    NEW_SWE, DENSITY = hourly_melt(0.5, mixed_pr, GAMMA, T[-1,:,:], pr, NEW_SWE, DENSITY)
     
-    ### output after chunk
-    NEW = 100 * (NEW / DENSITY) #[cm snow], total depth of snow layer
-    NEW = np.minimum(NEW, sdep_max) #depth does not exceed 6m
+    ### standardize output after calculations for time chunk
+    NEW_D = (NEW_SWE / DENSITY) #[m snow], total depth of snow layer
+    NEW_D = np.minimum(NEW_SWE, sdep_max) #ensure depth does not exceed 6m
     
-    NEW[no_chance_mask] = 0.     
+    NEW_D[no_chance_mask] = 0.     
     DENSITY[no_chance_mask] = rhomin #[kg/m^3], snowpack density
     
-    swe = NEW * 0.01 * DENSITY #[mm water], snowpack water equivalent
+    swe_mm = NEW_D * DENSITY #[kg/m2 or mm water], snowpack water equivalent
     
-    return NEW, DENSITY, swe
+    return NEW_D, DENSITY, swe_mm

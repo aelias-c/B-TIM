@@ -11,7 +11,7 @@ def save_annual(experiment_name, output_loc, mixed_pr, year_tag, lats, lons,
                     },
                     attrs = {
                         'description': 'total precipitation (frozen and liquid)',
-                        'units': "mm",
+                        'units': "m",
                         'standard_name': 'lwe_thickness_of_precipitation_amount'
                     }
                   )
@@ -23,7 +23,7 @@ def save_annual(experiment_name, output_loc, mixed_pr, year_tag, lats, lons,
                     },
                     attrs = {
                         'description': 'total snowfall (sum of lwe falling when 2m-temperature is below freezing)',
-                        'units': "mm",
+                        'units': "m",
                         'standard_name': 'lwe_thickness_of_surface_snow_amount'
                     }
                   )

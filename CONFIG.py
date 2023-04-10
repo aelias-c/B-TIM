@@ -1,8 +1,8 @@
-from ERA5_BTIM import *
+from MERRA2_BTIM import *
 
-Unique_ID = 'ERA5'
+Unique_ID = 'MERRA2'
 mixed_pr = False
-latminmax = [40,90]
+latminmax = [0,90]
 lonminmax = [0,360]
 leapdays = True
 

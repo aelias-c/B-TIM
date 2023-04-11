@@ -58,7 +58,7 @@ for i,m in enumerate([8,9,10,11,12,1,2,3,4,5,6,7]):
     for step in range(days_in_month * cfg.t2m_freq):
         
          # ------------ Read in precip data ------------- #
-        t2m_steps_per_pr = cfg.t2m_freq // cfg.pr_freq
+        t2m_steps_per_pr = cfg.t2m_freq //cfg.pr_freq
         prate = cfg.read_day(pr, 'tp', step // t2m_steps_per_pr,  latmask, lonmask)
         prate = cfg.standardize_precip(prate) #[m water] per precipitation time step
         prate[prate < 0] = 0
@@ -72,32 +72,33 @@ for i,m in enumerate([8,9,10,11,12,1,2,3,4,5,6,7]):
             t2m_last = t2m_air #[K]
         t2m_air = cfg.read_day(t2m, 't2m', step, latmask, lonmask) #[K]
         TSFC = np.stack((t2m_last, t2m_air)) - 273.15 #[degrees C]  
-        tavg = np.mean(TSFC, axis=0) #[degrees C] 
+        tavg = np.mean(TSFC, axis=0) #[degrees C]
         
         # ------ Record snowfall where tavg < 0C ------- #
         sftot_record[tavg <= 0] += prate[tavg <= 0]
         
         # --------- Linearly interpolate temp ---------- #
         hours_per_step = 24 // cfg.t2m_freq
-        T_hr = np.ones((hours_per_step+1, TSFC.shape[1], TSFC.shape[2])) #[degrees C] 
+        T_hr = np.ones((hours_per_step+1, TSFC.shape[1], TSFC.shape[2]))
         for hr in range(hours_per_step+1):
-            T_hr[hr,:,:] = (TSFC[1,:,:] - TSFC[0,:,:]) * hr / hours_per_step + TSFC[0,:,:]
+            T_hr[hr,:,:] = (TSFC[1,:,:] - TSFC[0,:,:]) * hr / hours_per_step + TSFC[0,:,:] #[degrees C]
         
         # -------- Calculate mean hourly precip -------- #
         TP_hr = prate / hours_per_step #[m] in one hour
         
         # ----------- Time-step by one chunk ----------- #
-        old_depth, old_dens, swe = Brasnett(cfg.mixed_pr, T_hr, TP_hr, old_depth, old_dens)
+        old_depth, old_dens, swe = Brasnett(cfg.mixed_pr, T_hr, TP_hr, old_depth, old_dens) #[m], [kg/m3], [mm]
 
         # --------- Track any record-high SWE ---------- #
-        SWEmax_record = np.maximum(SWEmax_record, swe) #[mm water equivalent] 
+        SWEmax_record = np.maximum(SWEmax_record, swe) #[mm water equivalent]
 
         # --- Record daily depth and density values ---- #
         if (step + 1) % cfg.t2m_freq == 0: #last time step each day
             print('day ', day)
-            
-            snf_record[:,:,day] = old_depth #[m snow] 
+            snf_record[:,:,day] = old_depth #[m snow]
             density_record[:,:,day] = old_dens #[kg/m3]
+            
+            # --- Record daily depth and density values ---- #
             
             # ----------- Write to monthly file ------------ #
             if (day + 1) == days_in_month: #last time step of last day of month

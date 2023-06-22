@@ -42,7 +42,7 @@ def translate_180(data, pwr_10 = 5):
     
     return data.sortby('longitude').sortby('latitude')
 
-def mult_scaling(month, forcing, target_name, clim_loc, lats, lons, latmask, lonmask, adjust, Unique_ID):
+def mult_scaling(month, forcing, target_name, clim_loc, lats, lons, latmask, lonmask, adjust, Unique_ID, weights_loc = './weights/'):
     
     clim = open_dataset(clim_loc+forcing+'_'+str(month).zfill(2)+'_mm.nc')
     target = open_dataset(clim_loc+target_name+'_'+str(month).zfill(2)+'_mm.nc')
@@ -62,7 +62,6 @@ def mult_scaling(month, forcing, target_name, clim_loc, lats, lons, latmask, lon
     # get bounds 
     gb = grid_bounds(clim)
     
-    weights_loc = '/users/jk/20/achereque/SnowProjects2/src/B-TIM/weights/'
     weights_name = forcing+'r_target_'+target_name+'_'+str(month).zfill(2)+'.nc'
     
     if isfile(weights_loc+'bil_'+weights_name):

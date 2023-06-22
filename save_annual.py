@@ -1,6 +1,6 @@
 from xarray import Dataset, DataArray
 
-def save_annual(experiment_name, output_loc, mixed_pr, year_tag, lats, lons, 
+def save_annual(Unique_ID, output_loc, mixed_pr, year_tag, lats, lons, 
                 ptot_record, sftot_record, SWEmax_record):
     
     ptotDA = DataArray(data = ptot_record,
@@ -47,7 +47,7 @@ def save_annual(experiment_name, output_loc, mixed_pr, year_tag, lats, lons,
         }
     )
 
-    savename = experiment_name + '_forced_'
+    savename = Unique_ID + '_forced_'
     if mixed_pr:
         savename += 'mixedpr_'
     savename += year_tag + '.nc'

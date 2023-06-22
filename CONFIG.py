@@ -1,9 +1,37 @@
-from MERRA2_BTIM import *
+from os import makedirs
+from os.path import exists
+import sys
 
-Unique_ID = 'MERRA2'
+year = int(sys.argv[1])
+
+forcing = str(sys.argv[2])
+data_loc = '/users/jk/20/achereque/SnowProjects2/data/01_forcing/'
+
 mixed_pr = False
-latminmax = [0,90]
+latminmax = [10,90]
 lonminmax = [0,360]
 leapdays = True
 
-output_loc = 'output/'
+Unique_ID = forcing
+
+# - For rescaling experiments - #
+
+if len(sys.argv) > 3:
+    adjust = str(sys.argv[3]) #tp, t2m, neither, both
+    clim_loc = '/users/jk/20/achereque/SnowProjects2/data/01_forcing/clim/'
+
+    if adjust != 'neither':
+        target_name = str(sys.argv[4])
+        Unique_ID += 'r_{}_target_{}'.format(adjust, target_name)
+else:
+    target_name = 'None'
+    adjust = 'neither'
+    clim_loc = 'fake_dir/'
+    
+# ----------------------------- #
+
+output_loc = '/users/jk/20/achereque/SnowProjects2/data/03_reconstruction_output/'+Unique_ID+'/'
+if not exists(output_loc):
+    makedirs(output_loc)
+    
+    

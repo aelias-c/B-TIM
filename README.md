@@ -2,7 +2,7 @@
 
 ## Brown Temperature Index Model (B-TIM)
 
-This simple distributed model uses (sub-daily or daily frequency) temperature and precipitation inputs and generates a daily record of snow depth and snow density on the same grid as the input data. Each water year starts on August 1 and ends on July 31, with 0m snow depth everywhere on August 1.
+This simple distributed model uses (sub-daily or daily frequency) temperature and precipitation inputs and generates a daily record of snow depth and snow density on the same grid as the input data. Each water year starts on August 1 and ends on July 31, with 0m snow depth everywhere on August 1. The current configuration accepts square grids or single points only.
 
 The model captures a single snow layer which evolves under the following processes:
 * New snowfall -> Hedstrom/Pomeroy (1998) relationship for new snow density; snow layer density updated as weighted average

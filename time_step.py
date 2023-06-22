@@ -14,6 +14,7 @@ def warm_snow_aging(DENSITY, SWE, timestep, wet_settle_mask):
     return del_den_warm
 
 def cold_snow_aging(DENSITY, SWE, TDD, icl, cold_settle_mask):
+    
     C2 = np.where((icl == 2) | (icl == 6), -28/1000, -21/1000)[cold_settle_mask]
     del_den_cold = 2 * np.exp(0.08 * TDD[cold_settle_mask]) * (0.6 * SWE[cold_settle_mask]) * np.exp(C2 * DENSITY[cold_settle_mask]) #[kg/m3]
     
@@ -41,8 +42,9 @@ def rain_melt(RAIN, T_diff, rain_melt_mask):
     
     Args:
         RAIN (np.array): total liquid precipitation (m water)
-        T_diff (np.array): Temerature for time step in degrees C
-        rain_melt_mask
+        T_diff (np.array): Temerature for time step in degrees C 
+                        minus the melt temperature
+        rain_melt_mask: binary array
     '''
     
     ### define some constants
@@ -51,7 +53,6 @@ def rain_melt(RAIN, T_diff, rain_melt_mask):
     rhoice = 917 #[kg/m^3], density of ice
     Lf = 0.334e6 #[J/kg], latent heat of fusion of water
 
-    ### compute rain 
     ### RAIN has units [m water] equiv. [1 m3 water per m2]
     mass_water_per_m2 = rhow * RAIN[rain_melt_mask] #[kg/m2] 
     heat_from_rain = mass_water_per_m2 * Cw * T_diff[rain_melt_mask] #[J/m2]
@@ -73,16 +74,19 @@ def new_snow_density(T):
     ### density is temperature dependent
     rhosfall_cold = 67.9 + 51.3 * np.exp(T / 2.6)
     
-    ### rhosfall_warm will only be used if mixed precip is active
+    ### rhosfall_warm will only be relevant if mixed 
+    ### precip is active
     rhosfall_warm =  np.minimum(119.2 + (20 * T), 200.)
   
     rhosfall = np.where(T <= 0, rhosfall_cold, rhosfall_warm)
+    
     return rhosfall
 
 def hourly_melt_rate(DENSITY, boreal_mask):
     ''' 
     Find hourly melt rate from daily rate based on 
-    Kuusito (1980) through density and vegetation type.
+    Kuusito (1980) through density and vegetation type. 
+    
     '''
     
     ### find gamma, hourly melt rate. depends on density 
@@ -92,6 +96,8 @@ def hourly_melt_rate(DENSITY, boreal_mask):
     dd[dd < 1e-4] = 1e-4
     dd[dd > 5.5e-3] = 5.5e-3
 
+    ### AEC 2023: we're treating all points as Tundra
+    ### so this is basically ignored
     boreal = (5.2e-6 * DENSITY) - 0.7e-3 #calculate daily melt as if all grid squares were Boreal forest [m/dayK]
     boreal[boreal < 1e-4] = 1e-4
     boreal[boreal > 3.5e-3] = 3.5e-3
@@ -107,6 +113,7 @@ def reduce_precip(pr, tundraprairie_scaling, tundraprairie_mask, boreal_scaling,
     boreal snowpack. Trying to capture blowing snow sublimation
     loss for tundra and prairie snowpack.
     '''
+    
     pr_copy = pr.copy()
     pr_copy[tundraprairie_mask] = tundraprairie_scaling * pr[tundraprairie_mask]
     pr_copy[boreal_mask] = boreal_scaling * pr[boreal_mask]
@@ -129,6 +136,7 @@ def hourly_melt(weight, mixed_pr, GAMMA, T, PCPN, DEPTH, DENSITY):
         DENSITY: existing snow density (kg/m^3)
         GAMMA: melting rate (mm/hr)
     '''
+    
     delt = 3600 #1h [s]
     rhomin = 200 #[kg/m^3]
     rhomax = 550 #[kg/m^3]         
@@ -211,7 +219,8 @@ def Brasnett(mixed_pr, T, pr, OLD, CD, tundraprairie_scaling=0.8, boreal_scaling
         
     #min density for Sturm snow classes, (starting with water so index matches classification number)
     #rhomin = [1000., 200., 160., 160., 180., 140., 120., 200.] #kg/m^3
-    '''       
+    '''     
+    
     rhomin = 200 #[kg/m^3]
     rhomax = 550 #[kg/m^3] 
     

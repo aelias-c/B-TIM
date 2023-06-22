@@ -3,7 +3,7 @@ from xarray import Dataset, DataArray
 def save_daily(lats, lons, times, snf_record, density_record, out_fname):
     
     sdepDA = DataArray(data = snf_record,
-                        dims = ['latitude', 'longitude', 'time'],
+                        dims = ['time', 'latitude', 'longitude'],
                         coords = {
                             'latitude': (['latitude'], lats),
                             'longitude':(['longitude'], lons),
@@ -17,7 +17,7 @@ def save_daily(lats, lons, times, snf_record, density_record, out_fname):
                       )
 
     sdenDA = DataArray(data = density_record,
-                    dims = ['latitude', 'longitude', 'time'],
+                    dims = ['time', 'latitude', 'longitude'],
                     coords = {
                         'latitude': (['latitude'], lats),
                         'longitude':(['longitude'], lons),

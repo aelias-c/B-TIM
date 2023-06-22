@@ -109,7 +109,9 @@ for i,m in enumerate([8,9,10,11,12,1,2,3,4,5,6,7]):
                                                               cfg.mixed_pr,
                                                               year_tag)
                 save_daily(full_lat[latmask], full_lon[lonmask], times, 
-                           snf_record, density_record, out_fname)
+                           np.transpose(snf_record, (1,2,0), 
+                           np.transpose(density_record, (1,2,0), 
+                           out_fname)
                 
             day += 1
 

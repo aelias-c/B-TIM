@@ -16,17 +16,16 @@ Unique_ID = forcing
 
 # - For rescaling experiments - #
 
+clim_loc = '/users/jk/20/achereque/SnowProjects2/data/01_forcing/clim/'
+
 if len(sys.argv) > 3:
     adjust = str(sys.argv[3]) #tp, t2m, neither, both
-    clim_loc = '/users/jk/20/achereque/SnowProjects2/data/01_forcing/clim/'
-
     if adjust != 'neither':
         target_name = str(sys.argv[4])
         Unique_ID += 'r_{}_target_{}'.format(adjust, target_name)
 else:
     target_name = 'None'
     adjust = 'neither'
-    clim_loc = 'fake_dir/'
     
 # ----------------------------- #
 

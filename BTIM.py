@@ -50,7 +50,7 @@ for i,m in enumerate([8,9,10,11,12,1,2,3,4,5,6,7]):
         
     t2m_scale, tp_scale = mult_scaling(m, cfg.forcing, cfg.target_name, cfg.clim_loc,
                                        full_lat, full_lon, latmask, lonmask, 
-                                       cfg.adjust, cfg.Unique_ID)
+                                       cfg.adjust, cfg.Unique_ID, cfg.rescaling_weights_loc)
         
     # ----- Set up daily records for the month ----- #
     snf_record = np.zeros((nlats, nlons, days_in_month)) #[m snow], snow depth

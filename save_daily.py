@@ -11,7 +11,7 @@ def save_daily(lats, lons, times, snf_record, density_record, out_fname):
                         },
                         attrs = {
                             'description': 'snow depth in metres of snow',
-                            'units': "m",
+                            'units': 'm',
                             'standard_name': 'surface_snow_thickness'
                         }
                       )

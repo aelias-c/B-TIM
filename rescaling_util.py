@@ -9,10 +9,42 @@ from square_mask import square_mask
 import matplotlib.pyplot as plt
 import cartopy.crs as ccrs
 
-import sys
-sys.path.append('../d00_utils/')
-from regridding_helper import grid_bounds, translate_0_360, translate_180
-from map_ax import map_ax
+def grid_bounds(data, pwr_10 = 5):
+
+    fac = 10**pwr_10
+    latitudes = np.array([int(fac * lat) for lat in data['latitude']])
+    longitudes = np.array([int(fac * lon) for lon in data['longitude']])
+    
+    lonstep = (longitudes[1] - longitudes[0])
+    latstep = (latitudes[1] - latitudes[0])
+    
+    lat_b = np.arange(latitudes[0]-latstep, latitudes[-1]+latstep, latstep)
+    lon_b = np.arange(longitudes[0]-lonstep, longitudes[-1]+lonstep, lonstep)
+
+    lat = latitudes - (latstep)/2
+    lon = longitudes - (lonstep)/2
+
+    return {'lon': lon/fac, 'lat': lat/fac, 'lon_b': lon_b/fac, 'lat_b': lat_b/fac}
+
+def translate_0_360(data, pwr_10 = 5):
+    
+    fac = 10**pwr_10
+    lons = np.array([int(fac * l) for l in data['longitude']])
+    lons_0_360 = lons % (fac * 360)
+    
+    data = data.assign_coords(longitude = lons_0_360 / fac)
+    
+    return data.sortby('longitude').sortby('latitude')
+    
+def translate_180(data, pwr_10 = 5):
+        
+    fac = 10**pwr_10
+    lons = np.array([int(fac * l) + (fac * 180) for l in data['longitude']])
+    lons_180 = (lons % (fac * 360)) - (fac * 180)
+    
+    data = data.assign_coords(longitude = lons_180 / fac)
+    
+    return data.sortby('longitude').sortby('latitude')
 
 def mult_scaling(month, forcing, target_name, clim_loc, lats, lons, latmask, lonmask, adjust, Unique_ID):
 

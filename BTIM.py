@@ -4,7 +4,7 @@ from pandas import date_range
 from utils import len_month, monthly_out_name, month_names_aug, prepare_filenames, read_month, read_day, t2m_freq, tp_freq, standardize_precip, standardize_temp
 from square_mask import square_mask
 from time_step import Brasnett
-from rescaling_utils import mult_scaling
+from rescaling_util import mult_scaling
 from save_daily import save_daily
 from save_annual import save_annual
 

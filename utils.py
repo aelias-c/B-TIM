@@ -33,7 +33,7 @@ def len_month(m, year, leapday=True):
 
 def prepare_filenames(forcing, data_loc, snow_season):
         
-    elif isin(forcing, ['CanESM5raw', 'CanESM5qdm', 'NorESM2raw', 'NorESM2qdm', 'MPIraw', 'MPIqdm', 'obs', 'CanESM5downscaled']):
+    if isin(forcing, ['CanESM5raw', 'CanESM5qdm', 'NorESM2raw', 'NorESM2qdm', 'MPIraw', 'MPIqdm', 'obs', 'CanESM5downscaled']):
         pattern = lambda var,m,y: data_loc+forcing+'_'+var+'_'+str(m).zfill(2)+'_'+str(y)+'.nc'
         
         tp_AugDec = [pattern('tp', i, snow_season[0]) for i in range(8, 13)]

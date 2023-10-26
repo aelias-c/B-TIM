@@ -1,7 +1,6 @@
 **Contact: Aleksandra Elias Chereque // aleksandra.eliaschereque@mail.utoronto.ca**
 
 [![DOI](https://zenodo.org/badge/454610465.svg)](https://zenodo.org/doi/10.5281/zenodo.10044950)
-reStructedText
 
 
 ## Brown Temperature Index Model (B-TIM)

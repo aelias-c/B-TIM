@@ -1,5 +1,9 @@
 **Contact: Aleksandra Elias Chereque // aleksandra.eliaschereque@mail.utoronto.ca**
 
+[![DOI](https://zenodo.org/badge/454610465.svg)](https://zenodo.org/doi/10.5281/zenodo.10044950)
+reStructedText
+
+
 ## Brown Temperature Index Model (B-TIM)
 
 This simple model uses (sub-daily or daily) temperature and precipitation inputs and generates a daily record of snow depth and snow density on the same grid as the input data. Each hydrological year initializes from 0mm SWE everywhere, starting August 1 and ending July 31.

@@ -1,4 +1,4 @@
-name: basic
+name: env_name
 channels:
   - defaults
   - conda-forge

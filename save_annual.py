@@ -1,7 +1,7 @@
 from xarray import Dataset, DataArray
 
 def save_annual(Unique_ID, output_loc, mixed_pr, year_tag, lats, lons, 
-                ptot_record, sftot_record, SWEmax_record):
+                ptot_record, sftot_record, SWEmax_record, first_time, last_time):
     
     if lats.size == 1:
         lats = lats[0]
@@ -9,10 +9,10 @@ def save_annual(Unique_ID, output_loc, mixed_pr, year_tag, lats, lons,
         lons = lons[0]
     
     ptotDA = DataArray(data = ptot_record,
-                    dims = ['latitude', 'longitude'],
+                    dims = ['lat', 'lon'],
                     coords = {
-                        'latitude': (['latitude'], lats),
-                        'longitude':(['longitude'], lons)
+                        'lat': (['lat'], lats),
+                        'lon':(['lon'], lons)
                     },
                     attrs = {
                         'description': 'total precipitation (frozen and liquid)',
@@ -21,10 +21,10 @@ def save_annual(Unique_ID, output_loc, mixed_pr, year_tag, lats, lons,
                     }
                   )
     sftotDA = DataArray(data = sftot_record,
-                    dims = ['latitude', 'longitude'],
+                    dims = ['lat', 'lon'],
                     coords = {
-                        'latitude': (['latitude'], lats),
-                        'longitude':(['longitude'], lons)
+                        'lat': (['lat'], lats),
+                        'lon':(['lon'], lons)
                     },
                     attrs = {
                         'description': 'total snowfall (sum of lwe falling when 2m-temperature is below freezing)',
@@ -33,10 +33,10 @@ def save_annual(Unique_ID, output_loc, mixed_pr, year_tag, lats, lons,
                     }
                   )
     SWEmaxDA = DataArray(data = SWEmax_record,
-                    dims = ['latitude', 'longitude'],
+                    dims = ['lat', 'lon'],
                     coords = {
-                        'latitude': (['latitude'], lats),
-                        'longitude':(['longitude'], lons)
+                        'lat': (['lat'], lats),
+                        'lon':(['lon'], lons)
                     },
                     attrs = {
                         'description': 'water year maximum snow water equivalent',
@@ -52,11 +52,14 @@ def save_annual(Unique_ID, output_loc, mixed_pr, year_tag, lats, lons,
         }
     )
 
-    savename = Unique_ID + '_forced_'
-    if mixed_pr[0] != mixed_pr[1]:
-        savename += 'mixedpr_'
-    savename += year_tag + '.nc'
+    output_dataset.lon.attrs = {'long_name':'longitude', 'units':'degrees_east'}
+    output_dataset.lat.attrs = {'long_name':'latitude', 'units':'degrees_north'}
+        
+    output_dataset['time_bounds'] = DataArray([first_time, last_time], coords = {'nv':[0,1]}, dims = ['nv'])
 
-    output_dataset.to_netcdf(output_loc + savename)
+    savename = Unique_ID
+    if mixed_pr[0] != mixed_pr[1]:
+        savename += '.mixedpr'
+    output_dataset.to_netcdf(output_loc + f'{savename}.annual.{year_tag}.nc')
     
     output_dataset.close()

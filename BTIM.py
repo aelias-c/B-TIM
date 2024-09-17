@@ -122,6 +122,11 @@ for i,m in enumerate([8,9,10,11,12,1,2,3,4,5,6,7]):
                            snf_record, density_record, 
                            out_fname)
                 
+                if i==0:
+                    first_time = times[0]
+                if i==11:
+                    last_time = times[-1]
+                
             day += 1
 
     if i != 11:
@@ -131,7 +136,8 @@ for i,m in enumerate([8,9,10,11,12,1,2,3,4,5,6,7]):
 # ------ Save accumulated records to file ------ #
 save_annual(cfg.Unique_ID, cfg.output_loc, cfg.mixed_pr, 
             year_tag, lats, lons, 
-            ptot_record, sftot_record, SWEmax_record)
+            ptot_record, sftot_record, SWEmax_record,
+            first_time, last_time)
 
 pr.close()
 t2m.close()

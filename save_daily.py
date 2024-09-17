@@ -9,11 +9,11 @@ def save_daily(lats, lons, times, snf_record, density_record, out_fname):
         lons = lons[0]
     
     sdepDA = DataArray(data = moveaxis(snf_record, (0,1,2), (1,2,0)),
-                        dims = ['time','latitude', 'longitude'],
+                        dims = ['time','lat','lon'],
                         coords = {
                             'time': times,
-                            'latitude': (['latitude'], lats),
-                            'longitude':(['longitude'], lons)
+                            'lat': (['lat'], lats),
+                            'lon':(['lon'], lons)
                             
                         },
                         attrs = {
@@ -24,11 +24,11 @@ def save_daily(lats, lons, times, snf_record, density_record, out_fname):
                       )
 
     sdenDA = DataArray(data = moveaxis(density_record, (0,1,2), (1,2,0)),
-                       dims = ['time','latitude', 'longitude'],
+                       dims = ['time','lat','lon'],
                        coords = {
                             'time': times,
-                            'latitude': (['latitude'], lats),
-                            'longitude':(['longitude'], lons),
+                            'lat': (['lat'], lats),
+                            'lon':(['lon'], lons),
                        },
                        attrs = {
                             'description': 'snow density in kilograms per cubic metre',
@@ -42,8 +42,8 @@ def save_daily(lats, lons, times, snf_record, density_record, out_fname):
                        'density': sdenDA}
                      )
 
-    dataset.longitude.attrs = {'units':'degrees_east'}
-    dataset.latitude.attrs = {'units':'degrees_north'}
+    dataset.lon.attrs = {'units':'degrees_east', 'long_name':'longitude'}
+    dataset.lat.attrs = {'units':'degrees_north', 'long_name':'latitude'}
     
     dataset.to_netcdf(out_fname)
     dataset.close()
